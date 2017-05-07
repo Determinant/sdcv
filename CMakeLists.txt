@@ -37,7 +37,7 @@ if (WITH_READLINE)
   endif ()
 endif (WITH_READLINE)
 
-option(ENABLE_NLS "Enable NLS support" True)
+option(ENABLE_NLS "Enable NLS support" False)
 
 set(sdcv_SRCS
   src/sdcv.cpp
