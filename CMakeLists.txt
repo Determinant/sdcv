@@ -27,11 +27,15 @@ if (NOT GLIB2_FOUND)
 		"make sure that you install it")
 endif()
 
-find_path(READLINE_INCLUDE_DIR readline/readline.h)
-find_library(READLINE_LIBRARY NAMES readline) 
-if (READLINE_INCLUDE_DIR AND READLINE_LIBRARY)
-  set(WITH_READLINE True)
-endif ()
+set(WITH_READLINE True CACHE BOOL "Use readline library")
+
+if (WITH_READLINE)
+  find_path(READLINE_INCLUDE_DIR readline/readline.h)
+  find_library(READLINE_LIBRARY NAMES readline)
+  if (NOT (READLINE_INCLUDE_DIR AND READLINE_LIBRARY))
+    set(WITH_READLINE False CACHE FORCE)
+  endif ()
+endif (WITH_READLINE)
 
 option(ENABLE_NLS "Enable NLS support" True)
 
@@ -84,6 +88,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
 include_directories(
 	${ZLIB_INCLUDE_DIR}
 	${GLIB2_INCLUDE_DIRS}
+	${READLINE_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
 	${CMAKE_CURRENT_BINARY_DIR}
 )
@@ -96,7 +101,7 @@ set(CPACK_PACKAGE_VENDOR "Evgeniy Dushistov <dushistov@mail.ru>")
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.org")
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "5")
-set(CPACK_PACKAGE_VERSION_PATCH "0-beta4")
+set(CPACK_PACKAGE_VERSION_PATCH "1")
 
 set(sdcv_VERSION
 	"${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
