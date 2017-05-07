@@ -70,11 +70,11 @@ int main(int argc, char *argv[]) try {
     gboolean show_version = FALSE;
     gboolean show_list_dicts = FALSE;
     glib::StrArr use_dict_list;
-    gboolean non_interactive = FALSE;
+    gboolean non_interactive = TRUE;
     gboolean utf8_output = FALSE;
     gboolean utf8_input = FALSE;
     glib::CharStr opt_data_dir;
-    gboolean colorize = FALSE;
+    gboolean colorize = TRUE;
 
     const GOptionEntry entries[] = {
         { "version", 'v', 0, G_OPTION_ARG_NONE, &show_version,

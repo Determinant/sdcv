@@ -46,10 +46,25 @@ static const char *EXAMPLE_VISFMT = ESC_LIGHT_GRAY;
 static const char *KREF_VISFMT = ESC_BOLD;
 static const char *ABR_VISFMT = ESC_GREEN;
 
+static const char *ENTRY_PREFIX = ">>";
+
 static std::string xdxf2text(const char *p, bool colorize_output)
 {
 	std::string res;
+    int ncol = 0;
+    std::string indent;
+    bool is_ind = true;
 	for (; *p; ++p) {
+        if (is_ind) {
+            if (*p == ' ')
+            {
+                res += "    ";
+                indent += "    ";
+                ncol++;
+                continue;
+            }
+            is_ind = false;
+        }
 		if (*p != '<') {
 			if (g_str_has_prefix(p, "&gt;")) {
 				res += ">";
@@ -66,9 +81,22 @@ static std::string xdxf2text(const char *p, bool colorize_output)
                        } else if (g_str_has_prefix(p, "&apos;")) {
                                res += "\'";
                                p += 5;
-			} else
-				res += *p;
-			continue;
+            } else {
+                if (*p == '\n')
+                {
+                    ncol = 0;
+                    is_ind = true;
+                }
+                else
+                    ncol++;
+                res += *p;
+            }
+            if (ncol == 80) {
+                res += "\n";
+                ncol = 0;
+                is_ind = true;
+            }
+            continue;
 		}
 
 		const char *next = strchr(p, '>');
@@ -259,12 +287,14 @@ void Library::print_search_result(FILE *out, const TSearchResult & res)
 	}
 
 	fprintf(out,
-            "-->%s%s%s\n"
-            "-->%s%s%s\n"
+            "%s %s%s%s\n"
+            "%s %s%s%s\n"
             "%s\n\n",
+            ENTRY_PREFIX,
             colorize_output_ ? NAME_OF_DICT_VISFMT : "",
             utf8_output_ ? res.bookname.c_str() : loc_bookname.c_str(),
             colorize_output_ ? ESC_END : "",
+            ENTRY_PREFIX,
             colorize_output_ ? SEARCH_TERM_VISFMT : "",
             utf8_output_ ? res.def.c_str() : loc_def.c_str(),
             colorize_output_ ? ESC_END : "",
@@ -375,7 +405,7 @@ bool Library::process_phrase(const char *loc_str, IReadLine &io, bool force)
 			for (size_t i = 0; i < res_list.size(); ++i) {
                 const std::string loc_bookname = utf8_to_locale_ign_err(res_list[i].bookname);
                 const std::string loc_def = utf8_to_locale_ign_err(res_list[i].def);
-				printf("%zu)%s%s%s-->%s%s%s\n", i,
+				printf("%2zu) %s%s%s: %s%s%s\n", i,
                        colorize_output_ ? NAME_OF_DICT_VISFMT : "",
 				       utf8_output_ ?  res_list[i].bookname.c_str() : loc_bookname.c_str(),
                        colorize_output_ ? ESC_END : "",
@@ -387,8 +417,12 @@ bool Library::process_phrase(const char *loc_str, IReadLine &io, bool force)
 			std::unique_ptr<IReadLine> choice_readline(create_readline_object());
 			for (;;) {
                 std::string str_choise;
-				choice_readline->read(_("Your choice[-1 to abort]: "), str_choise);
-				sscanf(str_choise.c_str(), "%d", &choise);
+				choice_readline->read(_("Your choice [empty to abort]: "), str_choise);
+				if (sscanf(str_choise.c_str(), "%d", &choise) == EOF)
+                {
+                    puts("");
+                    break;
+                }
 				if (choise >= 0 && choise < int(res_list.size())) {
 					sdcv_pager pager;
                     io.add_to_history(res_list[choise].def.c_str());
